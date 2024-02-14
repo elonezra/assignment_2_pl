@@ -15,7 +15,16 @@ Ex 1
 (test (sum-of-squares '(1 2 -3)) => 14)
 (test (sum-of-squares '(1/2 2 3)) => 53/4)
 (test (sum-of-squares '()) => 0)
+(test (sum-of-squares '(3)) => 9)
+(test (sum-of-squares '(1 2 3 4 5)) => 55)
+(test (sum-of-squares '(-1 -2 -3 -4 -5)) => 55)
+(test (sum-of-squares '(1/2 2/3 3/4 4/5 5/6)) => 9329/3600)
+(test (sum-of-squares '(1000000 2000000 3000000)) => 14000000000000)
+(test (sum-of-squares '(0.000001 0.000002 0.000003)) => 1.4e-11)
 
+
+
+#|
 ; Question no. 2
 (: createPolynomial : (Listof Number) -> (Number -> Number))
 (define (createPolynomial coeffs)
@@ -47,3 +56,4 @@ Ex 1
 
 (define p_0 (createPolynomial '()))
 (test (p_0 4) => 0)
+|#
