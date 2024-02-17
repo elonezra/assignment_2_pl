@@ -121,16 +121,19 @@ Question no. 2.b.ii
                             (parse-sexpr rhs))] 
     [else (error 'parse-sexpr "bad syntax in ~s" sexpr)])) 
 
-(: parse : String -> PLANG) 
- ;; parses a string containing a PLANG expression to a PLANG AST
-(define (parse str)
-  (let ([code (string->sexpr str)])
-    (match code
-      [(cons f r1)
-       (match f
-         [(cons 'poly r2) (Poly (list (append (parse-sexpr (first r2)) (parse (rest r2)))) (list (append (parse-sexpr (first r1)) (parse (rest r1)))))]
-      )]
-      )))
+(: parse : String -> PLANG)
+;; parses a string containing a PLANG expression
+(define (parse str) 
+ (let ([code (string->sexpr str)]) 
+ (match code
+   [(cons (cons 'poly coeffs) (list points))
+    (cond
+      [(not (list? coeffs)) (error 'parse "bad syntax in ~s" code)]
+      [(null? coeffs) (error 'parse "at least one coefficient is required in ~s" code)]
+      [(not (list? points)) (error 'parse "bad syntax in ~s" code)]
+      [(null? points) (error 'parse "at least one point is required in ~s" code)]
+      [else (Poly (map parse-sexpr coeffs) (map parse-sexpr points))])]
+   [else (error 'parse "bad syntax in ~s" code)])))
 
 ; (list (list 'poly AE AE... AE) (list AE AE... AE))
 
@@ -141,3 +144,62 @@ Question no. 2.b.ii
       =error> "parse: at least one coefficient is required in ((poly) (1 2))") 
 (test (parse "{{poly 1 2} {} }")
       =error> "parse: at least one point is required in ((poly 1 2) ())")
+
+; Test when coeffs is not a number
+(test (parse "{{poly '1'} {1 2 3}}")
+      =error> "parse-sexpr: bad syntax in \"1\"")
+
+
+; Test when points is not a list
+(test (parse "{{poly 1 2 3} 1}")
+      =error> "parse: bad syntax in ((poly 1 2 3) 1)")
+
+; Test when the input does not match the expected form
+(test (parse "{{1 2 3} {1 2 3}}")
+      =error> "parse: bad syntax in ((1 2 3) (1 2 3))")
+
+; Test when the input does not match the expected form
+(test (parse "{{poly 1 2 3} 1 2 3}")
+      =error> "parse: bad syntax in ((poly 1 2 3) 1 2 3)")
+
+; Test when the input does not match the expected form
+(test (parse "{1 2 3 1 2 3}")
+      =error> "parse: bad syntax in (1 2 3 1 2 3)")
+
+#|
+Question no. 2.b.iii
+|#
+;; evaluates AE expressions to numbers
+(: eval : AE -> Number)
+ (define (eval expr)
+   (cases expr 
+     [(Num n) n] 
+     [(Add l r) (+ (eval l) (eval r))] 
+     [(Sub l r) (- (eval l) (eval r))] 
+     [(Mul l r) (* (eval l) (eval r))] 
+     [(Div l r) (/ (eval l) (eval r))]))
+
+(: eval-poly : PLANG -> <-fill in-> ) 
+ (define (eval-poly p-expr) 
+ <-fill in-> )
+
+(: run : String -> (Listof Number))
+ ;; evaluate a FLANG program contained in a string
+(define (run str)
+  (eval-poly (parse str)))
+
+(test (run "{{poly 1 2 3} {1 2 3}}") => '(6 17 34))
+
+(test (run "{{poly 4 2 7} {1 4 9}}") => '(13 124 589))
+
+(test (run "{{poly 1 2 3} {1 2 3}}") => '(6 17 34))
+
+(test (run "{{poly 4/5 } {1/2 2/3 3}}") => '(4/5 4/5 4/5))
+
+(test (run "{{poly 2 3} {4}}") => '(14))
+
+(test (run "{{poly 1 1 0} {-1 3 3}}") => '(0 4 4))
+
+(test (run "{{poly {/ 4 2} {- 4 1}} {{- 8 4}}}") => '(14))
+
+(test (run "{{poly {+ 0 1} 1 {* 0 9}} {{- 4 5} 3 {/ 27 9}}}") => '(0 4 4))
