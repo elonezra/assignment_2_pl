@@ -121,6 +121,19 @@ Question no. 2.b.ii
                             (parse-sexpr rhs))] 
     [else (error 'parse-sexpr "bad syntax in ~s" sexpr)])) 
 
+#|
+The `parse` function parses a string containing a PLANG expression.
+
+Parameters:
+- `str`: A string representing a PLANG expression.
+
+Return Value:
+- The function returns a `Poly` object that represents the parsed PLANG expression.
+
+Example Usage:
+- `(parse "{{poly 1 2 3} {1 2 3}}")` parses the string into a `Poly` object that represents the polynomial 1 + 2x + 3x^2 evaluated at the points 1, 2, and 3.
+
+|#
 (: parse : String -> PLANG)
 ;; parses a string containing a PLANG expression
 (define (parse str) 
@@ -128,7 +141,6 @@ Question no. 2.b.ii
  (match code
    [(cons (cons 'poly coeffs) (list points))
     (cond
-      [(not (list? coeffs)) (error 'parse "bad syntax in ~s" code)]
       [(null? coeffs) (error 'parse "at least one coefficient is required in ~s" code)]
       [(not (list? points)) (error 'parse "bad syntax in ~s" code)]
       [(null? points) (error 'parse "at least one point is required in ~s" code)]
@@ -136,19 +148,21 @@ Question no. 2.b.ii
    [else (error 'parse "bad syntax in ~s" code)])))
 
 ; (list (list 'poly AE AE... AE) (list AE AE... AE))
+; Test when coeffs is not a list
 
 (test (parse "{{poly 1 2 3} {1 2 3}}")
       => (Poly (list (Num 1) (Num 2) (Num 3))
-               (list (Num 1) (Num 2) (Num 3)))) 
+               (list (Num 1) (Num 2) (Num 3))))
+
 (test (parse "{{poly } {1 2} }")
-      =error> "parse: at least one coefficient is required in ((poly) (1 2))") 
+      =error> "parse: at least one coefficient is required in ((poly) (1 2))")
+
 (test (parse "{{poly 1 2} {} }")
       =error> "parse: at least one point is required in ((poly 1 2) ())")
 
 ; Test when coeffs is not a number
 (test (parse "{{poly '1'} {1 2 3}}")
       =error> "parse-sexpr: bad syntax in \"1\"")
-
 
 ; Test when points is not a list
 (test (parse "{{poly 1 2 3} 1}")
@@ -166,6 +180,35 @@ Question no. 2.b.ii
 (test (parse "{1 2 3 1 2 3}")
       =error> "parse: bad syntax in (1 2 3 1 2 3)")
 
+(test (parse "{{poly 4/5} {1/2 2/3 3}}")
+      => (Poly (list (Num 4/5)) (list (Num 1/2) (Num 2/3) (Num 3))))
+
+(test (parse "{{poly 2 3} {4}}")
+      => (Poly (list (Num 2) (Num 3)) (list (Num 4))))
+
+(test (parse "{{poly 1 1 0} {-1 3 3}}")
+      => (Poly (list (Num 1) (Num 1) (Num 0)) (list (Num -1) (Num 3) (Num 3))))
+
+(test (parse "{{poly {/ 4 2} {- 4 1}} {{- 8 4}}}")
+      => (Poly (list (Div (Num 4) (Num 2)) (Sub (Num 4) (Num 1))) (list (Sub (Num 8) (Num 4)))))
+
+(test (parse "{{poly {+ 0 1} 1 {* 0 9}} {{- 4 5} 3 {/ 27 9}}}")
+      => (Poly (list (Add (Num 0) (Num 1)) (Num 1) (Mul (Num 0) (Num 9))) (list (Sub (Num 4) (Num 5)) (Num 3) (Div (Num 27) (Num 9)))))
+
+; Test invalid expressions
+(test (parse "{{poly } {1 2 3} }")
+      =error> "parse: at least one coefficient is required in ((poly) (1 2 3))")
+
+(test (parse "{{poly 4/5 } {1/2 2/3 3} {poly 1 2 4} {1 2}}")
+      =error> "parse: bad syntax in ((poly 4/5) (1/2 2/3 3) (poly 1 2 4) (1 2))")
+
+(test (parse "{{poly 2 3} {}}")
+      =error> "parse: at least one point is required in ((poly 2 3) ())")
+
+; Test when points list is empty
+(test (parse "{{poly 1 1 3} }")
+      =error> "parse: bad syntax in ((poly 1 1 3))")
+
 #|
 Question no. 2.b.iii
 |#
@@ -179,7 +222,19 @@ Question no. 2.b.iii
      [(Mul l r) (* (eval l) (eval r))] 
      [(Div l r) (/ (eval l) (eval r))]))
 
+#|
+The `eval-poly` function evaluates a PLANG expression to a list of numbers.
 
+Parameters:
+- `p-expr`: A `Poly` object representing a PLANG expression.
+
+Return Value:
+- The function returns a list of numbers that are the values of the polynomial at the points specified in the `Poly` object.
+
+Example Usage:
+- `(eval-poly (Poly (list (Num 1) (Num 2) (Num 3)) (list (Num 1) (Num 2) (Num 3))))` evaluates the polynomial 1 + 2x + 3x^2 at the points 1, 2, and 3, and returns the list `(6 17 34)`.
+
+|#
 (: eval-poly : PLANG -> (Listof Number) ) 
  (define (eval-poly p-expr)
    (cases p-expr
@@ -188,6 +243,19 @@ Question no. 2.b.iii
      )
    )
 
+#|
+The `run` function evaluates a PLANG program contained in a string.
+
+Parameters:
+- `str`: A string representing a PLANG program.
+
+Return Value:
+- The function returns a list of numbers that are the results of evaluating the PLANG program.
+
+Example Usage:
+- `(run "{{poly 1 2 3} {1 2 3}}")` evaluates the PLANG program that represents the polynomial 1 + 2x + 3x^2 evaluated at the points 1, 2, and 3, and returns the list `(6 17 34)`.
+
+|#
 (: run : String -> (Listof Number))
  ;; evaluate a FLANG program contained in a string
 (define (run str)
@@ -208,3 +276,30 @@ Question no. 2.b.iii
 (test (run "{{poly {/ 4 2} {- 4 1}} {{- 8 4}}}") => '(14))
 
 (test (run "{{poly {+ 0 1} 1 {* 0 9}} {{- 4 5} 3 {/ 27 9}}}") => '(0 4 4))
+
+; Test when coeffs and points are arithmetic expressions
+(test (run "{{poly {+ 1 2} {- 3 4}} {5 6 7}}") => '(-2 -3 -4))
+
+; Test when coeffs and points are arithmetic expressions with division
+(test (run "{{poly {/ 8 4} {/ 6 2}} {1 2 3}}") => '(5 8 11))
+
+; Test when coeffs and points are arithmetic expressions with multiplication
+(test (run "{{poly {* 1 2} {* 3 4}} {5 6 7}}") => '(62 74 86))
+
+; Test when coeffs and points are arithmetic expressions with subtraction
+(test (run "{{poly {- 1 2} {- 3 4}} {5 6 7}}") => '(-6 -7 -8))
+
+; Test when coeffs list is empty
+(test (run "{{poly } {1 2 3}}")
+      =error> "parse: at least one coefficient is required in ((poly) (1 2 3))")
+
+; Test when points list is empty
+(test (run "{{poly 1 2 3} {}}")
+      =error> "parse: at least one point is required in ((poly 1 2 3) ())")
+
+; Test when coeffs and points are fractions
+(test (run "{{poly {/ 1 2} {/ 3 4}} {5 6 7}}") => '(17/4 5 23/4))
+
+; Test when coeffs are fractions and points are integers
+(test (run "{{poly {/ 1 2} {/ 3 4}} {1 2 3}}") => '(5/4 2 11/4))
+
