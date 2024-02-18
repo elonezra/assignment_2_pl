@@ -179,9 +179,14 @@ Question no. 2.b.iii
      [(Mul l r) (* (eval l) (eval r))] 
      [(Div l r) (/ (eval l) (eval r))]))
 
-(: eval-poly : PLANG -> <-fill in-> ) 
- (define (eval-poly p-expr) 
- <-fill in-> )
+
+(: eval-poly : PLANG -> (Listof Number) ) 
+ (define (eval-poly p-expr)
+   (cases p-expr
+     [(Poly coeffs exp)
+      (map (createPolynomial (map eval coeffs)) (map eval exp))]
+     )
+   )
 
 (: run : String -> (Listof Number))
  ;; evaluate a FLANG program contained in a string
