@@ -41,14 +41,14 @@ Example Usage:
 
 (: createPolynomial : (Listof Number) -> (Number -> Number))
 (define (createPolynomial coeffs)
-  (: poly : (Listof Number) Number Integer Number -> Number)
+  (: poly : (Listof Number) Number Integer Integer -> Number)
   (define (poly argsL x power accum)
-    (if (null? argsL)
-        accum
-        (poly (rest argsL) x (+ power 1) (+ accum (* (first argsL) (expt x power))))))
+    (if (eq? accum (- power 1))
+        0
+        (+ (* (first argsL) (expt x (+ 1 accum))) (poly (rest argsL) x power (+ 1 accum)))))
   (: polyX : Number -> Number)
   (define (polyX x)
-    (poly coeffs x 0 0))
+    (poly coeffs x (length coeffs) -1))
   polyX)
 
 
